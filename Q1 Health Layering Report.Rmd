@@ -14,7 +14,6 @@ knitr::opts_chunk$set(echo = FALSE, warnings = FALSE, message = FALSE)
 
 # required libraries
 library(knitr)
-library(pptxtemplates)
 library(readxl)
 library(tidyverse)
 library(lubridate)
@@ -22,7 +21,7 @@ library(dplyr)
 library(flextable)
 library(officer)
 
-content_dimensions <- pptx_content_dimensions("Reference_document.pptx")
+content_dimensions <- read_pptx("Reference_document.pptx")
 
 opts_template$set(
   full = content_dimensions$full,
