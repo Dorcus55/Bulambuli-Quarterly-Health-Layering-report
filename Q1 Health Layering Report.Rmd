@@ -1,0 +1,335 @@
+---
+title: "Bulambuli Q1 2025 Health Layering Report"
+author: "Prepared by Spark M&E Team"
+date: "`r Sys.Date()`"
+output: 
+    powerpoint_presentation:
+    reference_doc: "Reference_document.pptx"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warnings = FALSE, message = FALSE)
+
+# required libraries
+library(knitr)
+library(pptxtemplates)
+library(readxl)
+library(tidyverse)
+library(lubridate)
+library(dplyr)
+library(flextable)
+library(officer)
+
+content_dimensions <- pptx_content_dimensions("Reference_document.pptx")
+
+opts_template$set(
+  full = content_dimensions$full,
+  left = content_dimensions$left,
+  right = content_dimensions$right)
+
+
+# Importing data
+
+Q1_Health_data <- read_excel("FCAP Workflow - Bulambuli 2.0 - FCAP Progress - Bulambuli Layering Questionnaire (created 2024-08-12) 2025-03-20.xlsx") %>% filter(Year == 2025)
+
+colnames(Q1_Health_data)
+
+
+```
+
+## REPORT OUTLINE
+
+* Background
+* Objectives of the Health Layering Project
+* Methodology
+    * Study Population
+    * Sample Size
+    * Data Collection
+* Definition of Study Variables
+* Findings
+    * Summary table of Indicator Performance
+    * Functional Latrine Coverage
+    * Hand Washing Facility Coverage
+    * Dish Drying Rack
+* Conclusions and Recommendations
+
+
+## BACKGROUND
+* Bulambuli district in Eastern Uganda is home to 108 villages where Spark Microgrants is working to improve livelihoods. To support these efforts, we recently collected data from 53 of our implementation on key health indicators related to water, sanitation, and hygiene (WASH). This data is critical for understanding the current state of health and hygiene in the district, which directly impacts the well-being of the community.
+
+* The indicators we focused on include the percentage of households with functional latrines, hand washing facilities, access to safe drinking water, safe water storage, and dish drying racks. We also compared the latrine and hand washing coverage in each village to the district-wide averages. According to the district health office, Bulambuli currently has a 77% coverage of functional latrines, which falls short of the 100% needed to declare the district open defecation free (ODF). Additionally, only 45% of households have hand washing facilities.
+
+* These statistics highlight the need for focused interventions to improve WASH in Bulambuli. The data from our survey will help us identify specific areas for improvement in each village, guiding our efforts to ensure better health and hygiene for the communities we serve.
+
+
+## OBJECTIVES OF HEALTH LAYERING INTO THE FCAP
+
+* Overall Objective:
+
+    * To improve overall health and hygiene practices among FCAP Communities.
+
+* Specific Objectives:
+
+    * To raise the coverage of pit latrines from the current 78% by ensuring that every household has access to a well-maintained pit latrine.
+    
+    * To increase the availability of handwashing facilities from 45% by promoting the installation of proper handwashing stations in all households.
+    
+    * To enhance the adoption of drying racks by encouraging clean and sanitary kitchen practices
+    
+    * To introduce regular health sensitization sessions led by Bulambuli Health Assistants during FCAP meetings, focusing on hygiene, sanitation, and disease prevention.
+    
+## METHODOLOGY
+
+* STUDY POPULATION
+
+* This study was conducted across the FCAP communities in Bulambuli District, involving all 53 communities from the 2023 FCAP cohort, where data was collected.
+
+* Sample size 
+
+* The Community Based Facilitator was tasked to provide a list of all households in the communities involved in the FCAP project. This Households list was collected within a month and was verified by the respective Spark Trainers.
+
+* In total, 3,119 Households were involved in the exercise.
+
+## SAMPLED HOUSEHOLDS PER SUB-COUNTY
+
+:::::: {.columns}
+::: {.column}
+
+```{r, opts.label = "right"}
+
+Q1_Health_data$Households_surveyed <- as.numeric(Q1_Health_data$Households_surveyed)
+
+Q1_Health_data$HH_Size <- as.numeric(Q1_Health_data$HH_Size)
+
+
+summary_table <- Q1_Health_data %>% 
+  group_by(Subcounty) %>% 
+  summarise(
+    surveyed_households = sum(Households_surveyed, na.rm = TRUE),
+    total_households = sum(HH_Size, na.rm = TRUE)
+  ) %>% 
+  mutate(
+    percent_surveyed = round((surveyed_households / total_households) * 100, 1)
+  ) %>% 
+  select(Subcounty, surveyed_households, total_households)
+
+knitr::kable(summary_table , align = 'l')
+
+```
+
+:::
+
+::: {.column}
+
+* Overall, the program performed strongly throughout the year, achieving all program quality indicators, as illustrated in the graph, with each indicator exceeding its target.
+
+* However, the percentage of communities in the green category saw a sharp decline from 86% in Q3 to 67% in Q4. This drop is attributed to the inclusion of the new 2024 cohort communities, which were in the early stages of the FCAP, as this partnership commenced in Q4.
+
+:::
+::::::
+
+## DATA COLLECTION
+
+* For data collection, Community Based Facilitators (CBFs) were availed with templates which consisted of all Household Head names, and the health indicators of interest such as Functional Latrine Coverage, availability of a Hand Washing Facility, availability of drying racks, access to safe water and safe water storage. The CBF indicated a ‘yes’ if the H/H had the item available and a ‘No’ if the item didn’t exist.
+
+* The Community Based Facilitators (CBFs) visited Households/homes, asked the Household Heads if they had the facilities of interest but also confirmed through observation. The completed template was returned to the Spark offices.
+
+* The Spark Trainers then made summaries from the templates and entered these summaries onto the Health Layering Form on Commcare from where the data was extracted for analysis. 
+
+## VARIABLE DEFINATIONS
+
+* A functional Latrine: A functional latrine is a facility which is found providing service to households during data collection even if it needs maintenance (Woyessa et al., 2022).
+
+* It implies that the latrine is properly built, maintained, and in a condition that ensures it can serve its intended purpose effectively.
+
+* Hand Washing Facility:  A facility providing either a basin, container, or outlet with an adequate supply of potable water and soap. It is a designated setup or station where individuals can clean their hands with soap and water to remove dirt, germs, and contaminants
+
+* Dish Drying Rack: Is any kitchen structure designed to hold dishes, utensils, and cookware after they have been washed, allowing them to air dry.
+
+## DEFINATION OF INDICATORS
+
+```{r, opts.label = "right"}
+
+Indicator_defination <- read_excel("FCAP Workflow - Bulambuli 2.0 - FCAP Progress - Bulambuli Layering Questionnaire (created 2024-08-12) 2025-03-20.xlsx", 
+    sheet = "Indicator Defination")
+
+
+knitr::kable(Indicator_defination, align = 'l')
+
+```
+
+
+## FINDINGS
+
+## SUMMARY OF INDICATORS' PERFORMANCE
+
+```{r, opts.label = "right"}
+
+Q1_Health_data$Functional_Latrine <- as.numeric(Q1_Health_data$Functional_Latrine)
+
+Q1_Health_data$Functional_Hand_Washing_Facility <- as.numeric(Q1_Health_data$Functional_Hand_Washing_Facility)
+
+Q1_Health_data$Functional_Dish_drying_rack <- as.numeric(Q1_Health_data$Functional_Dish_drying_rack)
+
+
+Q1_Indicator_Performance <- Q1_Health_data %>% 
+  mutate(
+    Percent_Functional_Latrine_Coverage = ((Functional_Latrine / Households_surveyed) * 100),
+    Percent_Hand_Washing_Facility_Coverage = ((Functional_Hand_Washing_Facility / Households_surveyed) * 100),
+    Percent_Functional_Dish_Drying_Rack = ((Functional_Dish_drying_rack / Households_surveyed) * 100)) %>% 
+    summarize(Q1_Latrine_Coverage  = mean(Percent_Functional_Latrine_Coverage),
+              Q1_Hand_Washing_Fac = mean(Percent_Hand_Washing_Facility_Coverage),
+              Q1_Drying_Rack = mean(Percent_Functional_Dish_Drying_Rack))
+
+knitr::kable(Q1_Indicator_Performance , align = 'l')
+
+```
+
+## INDICATOR PERFORMANCE 
+
+:::::: {.columns}
+::: {.column}
+
+```{r, opts.label = "right"}
+
+Ind_Performance <- read_excel("FCAP Workflow - Bulambuli 2.0 - FCAP Progress - Bulambuli Layering Questionnaire (created 2024-08-12) 2025-03-20.xlsx", 
+    sheet = "Comparison Q1-25 and Q2-24 ")
+
+Ind_Performance[] <- lapply(Ind_Performance, function(x) {
+  if (is.numeric(x)) {
+    return(scales::percent(x))  
+  } else {
+    return(x)
+  }
+})
+
+knitr::kable(Ind_Performance, align = 'l')
+
+```
+
+:::
+
+::: {.column}
+
+* Overall, the program performed strongly throughout the year, achieving all program quality indicators, as illustrated in the graph, with each indicator exceeding its target.
+
+* However, the percentage of communities in the green category saw a sharp decline from 86% in Q3 to 67% in Q4. This drop is attributed to the inclusion of the new 2024 cohort communities, which were in the early stages of the FCAP, as this partnership commenced in Q4.
+
+:::
+::::::
+
+## LATRINE COVERAGE PER SUB COUNTY
+
+:::::: {.columns}
+::: {.column}
+
+```{r, opts.label = "right"}
+library(readxl)
+library(scales)
+library(knitr)
+
+FCAP_quality_overall <- read_excel("Uganda_Q4_2024_data.xlsx", sheet = "FCAP_quality(overall)")
+
+FCAP_quality_overall[] <- lapply(FCAP_quality_overall, function(x) {
+  if (is.numeric(x)) {
+    return(scales::percent(x))  
+  } else {
+    return(x)
+  }
+})
+
+knitr::kable(FCAP_quality_overall, align = 'l')
+
+```
+
+:::
+
+::: {.column}
+
+* Overall, the program performed strongly throughout the year, achieving all program quality indicators, as illustrated in the graph, with each indicator exceeding its target.
+
+* However, the percentage of communities in the green category saw a sharp decline from 86% in Q3 to 67% in Q4. This drop is attributed to the inclusion of the new 2024 cohort communities, which were in the early stages of the FCAP, as this partnership commenced in Q4.
+
+:::
+::::::
+
+## HAND WASHING FACILITY COVERAGE
+
+:::::: {.columns}
+::: {.column}
+
+```{r, opts.label = "right"}
+library(readxl)
+library(scales)
+library(knitr)
+
+FCAP_quality_overall <- read_excel("Uganda_Q4_2024_data.xlsx", sheet = "FCAP_quality(overall)")
+
+FCAP_quality_overall[] <- lapply(FCAP_quality_overall, function(x) {
+  if (is.numeric(x)) {
+    return(scales::percent(x))  
+  } else {
+    return(x)
+  }
+})
+
+knitr::kable(FCAP_quality_overall, align = 'l')
+
+```
+
+:::
+
+::: {.column}
+
+* Overall, the program performed strongly throughout the year, achieving all program quality indicators, as illustrated in the graph, with each indicator exceeding its target.
+
+* However, the percentage of communities in the green category saw a sharp decline from 86% in Q3 to 67% in Q4. This drop is attributed to the inclusion of the new 2024 cohort communities, which were in the early stages of the FCAP, as this partnership commenced in Q4.
+
+:::
+::::::
+
+## DRYING RACKS COVERAGE
+
+:::::: {.columns}
+::: {.column}
+
+```{r, opts.label = "right"}
+library(readxl)
+library(scales)
+library(knitr)
+
+FCAP_quality_overall <- read_excel("Uganda_Q4_2024_data.xlsx", sheet = "FCAP_quality(overall)")
+
+FCAP_quality_overall[] <- lapply(FCAP_quality_overall, function(x) {
+  if (is.numeric(x)) {
+    return(scales::percent(x))  
+  } else {
+    return(x)
+  }
+})
+
+knitr::kable(FCAP_quality_overall, align = 'l')
+
+```
+
+:::
+
+::: {.column}
+
+* Overall, the program performed strongly throughout the year, achieving all program quality indicators, as illustrated in the graph, with each indicator exceeding its target.
+
+* However, the percentage of communities in the green category saw a sharp decline from 86% in Q3 to 67% in Q4. This drop is attributed to the inclusion of the new 2024 cohort communities, which were in the early stages of the FCAP, as this partnership commenced in Q4.
+
+:::
+::::::
+
+## CONCLUSIONS AND RECOMMENDATIONS
+
+
+
+
+
+ 
+
