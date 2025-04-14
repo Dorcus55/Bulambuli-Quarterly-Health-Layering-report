@@ -20,6 +20,9 @@ library(lubridate)
 library(dplyr)
 library(flextable)
 library(officer)
+library(scales)
+library(knitr)
+library(ggplot2)
 
 content_dimensions <- read_pptx("Reference_document.pptx")
 
@@ -31,7 +34,7 @@ opts_template$set(
 
 # Importing data
 
-Q1_Health_data <- read_excel("FCAP Workflow - Bulambuli 2.0 - FCAP Progress - Bulambuli Layering Questionnaire (created 2024-08-12) 2025-03-20.xlsx") %>% filter(Year == 2025)
+Q1_Health_data <- read_excel("FCAP Workflow - Bulambuli 2.0 - FCAP Progress - Bulambuli Layering Questionnaire (created 2024-08-12) 2025-03-20.xlsx") %>% filter(Year == 2025 & Month == 3)
 
 colnames(Q1_Health_data)
 
@@ -89,7 +92,7 @@ colnames(Q1_Health_data)
 
 * The Community Based Facilitator was tasked to provide a list of all households in the communities involved in the FCAP project. This Households list was collected within a month and was verified by the respective Spark Trainers.
 
-* In total, 3,119 Households were involved in the exercise.
+* In total, 2,998 Households were involved in the exercise.
 
 ## SAMPLED HOUSEHOLDS PER SUB-COUNTY
 
@@ -110,9 +113,10 @@ summary_table <- Q1_Health_data %>%
     total_households = sum(HH_Size, na.rm = TRUE)
   ) %>% 
   mutate(
-    percent_surveyed = round((surveyed_households / total_households) * 100, 1)
+    percent_surveyed = round((surveyed_households / total_households) * 100, 0),
+    percent_surveyed = ifelse(percent_surveyed > 100, 100, percent_surveyed)  # Cap at 100%
   ) %>% 
-  select(Subcounty, surveyed_households, total_households)
+  select(Subcounty, surveyed_households, total_households, percent_surveyed)
 
 knitr::kable(summary_table , align = 'l')
 
@@ -122,16 +126,16 @@ knitr::kable(summary_table , align = 'l')
 
 ::: {.column}
 
-* Overall, the program performed strongly throughout the year, achieving all program quality indicators, as illustrated in the graph, with each indicator exceeding its target.
+* As can be seen in the table, majority of FCAP members participated in the data collection.
 
-* However, the percentage of communities in the green category saw a sharp decline from 86% in Q3 to 67% in Q4. This drop is attributed to the inclusion of the new 2024 cohort communities, which were in the early stages of the FCAP, as this partnership commenced in Q4.
+* The number of households surveyed in Bumugibole, Bunambutye and Nabongo were above the total number of FCAP households recorded on Commcare
 
 :::
 ::::::
 
 ## DATA COLLECTION
 
-* For data collection, Community Based Facilitators (CBFs) were availed with templates which consisted of all Household Head names, and the health indicators of interest such as Functional Latrine Coverage, availability of a Hand Washing Facility, availability of drying racks, access to safe water and safe water storage. The CBF indicated a ‘yes’ if the H/H had the item available and a ‘No’ if the item didn’t exist.
+* For data collection, Community Based Facilitators (CBFs) were availed with templates which consisted of all Household Head names and the health indicators of interest such as Functional Latrine, Hand Washing Facility and Drying racks coverage. The CBF indicated a ‘yes’ if the H/H had the item available and a ‘No’ if the item didn’t exist.
 
 * The Community Based Facilitators (CBFs) visited Households/homes, asked the Household Heads if they had the facilities of interest but also confirmed through observation. The completed template was returned to the Spark offices.
 
@@ -141,13 +145,14 @@ knitr::kable(summary_table , align = 'l')
 
 * A functional Latrine: A functional latrine is a facility which is found providing service to households during data collection even if it needs maintenance (Woyessa et al., 2022).
 
-* It implies that the latrine is properly built, maintained, and in a condition that ensures it can serve its intended purpose effectively.
-
-* Hand Washing Facility:  A facility providing either a basin, container, or outlet with an adequate supply of potable water and soap. It is a designated setup or station where individuals can clean their hands with soap and water to remove dirt, germs, and contaminants
+* Hand Washing Facility:  A facility providing either a basin, container, or outlet with an adequate supply of potable water and soap. It is a designated setup or station where individuals can clean their hands with soap/ash and water to remove dirt, germs, and contaminants
 
 * Dish Drying Rack: Is any kitchen structure designed to hold dishes, utensils, and cookware after they have been washed, allowing them to air dry.
 
 ## DEFINATION OF INDICATORS
+
+:::
+::
 
 ```{r, opts.label = "right"}
 
@@ -162,7 +167,11 @@ knitr::kable(Indicator_defination, align = 'l')
 
 ## FINDINGS
 
-## SUMMARY OF INDICATORS' PERFORMANCE
+## SUMMARY OF INDICATORS' PERFORMANCE IN Q1 2025
+
+:::::: {.columns}
+
+::: {.column}
 
 ```{r, opts.label = "right"}
 
@@ -173,20 +182,32 @@ Q1_Health_data$Functional_Hand_Washing_Facility <- as.numeric(Q1_Health_data$Fun
 Q1_Health_data$Functional_Dish_drying_rack <- as.numeric(Q1_Health_data$Functional_Dish_drying_rack)
 
 
-Q1_Indicator_Performance <- Q1_Health_data %>% 
+Q1_Health_data <- Q1_Health_data %>% 
   mutate(
     Percent_Functional_Latrine_Coverage = ((Functional_Latrine / Households_surveyed) * 100),
     Percent_Hand_Washing_Facility_Coverage = ((Functional_Hand_Washing_Facility / Households_surveyed) * 100),
-    Percent_Functional_Dish_Drying_Rack = ((Functional_Dish_drying_rack / Households_surveyed) * 100)) %>% 
-    summarize(Q1_Latrine_Coverage  = mean(Percent_Functional_Latrine_Coverage),
-              Q1_Hand_Washing_Fac = mean(Percent_Hand_Washing_Facility_Coverage),
-              Q1_Drying_Rack = mean(Percent_Functional_Dish_Drying_Rack))
+    Percent_Functional_Dish_Drying_Rack = ((Functional_Dish_drying_rack / Households_surveyed) * 100)) 
+
+Q1_Indicator_Performance <- Q1_Health_data %>% 
+    summarize(Q1_Latrine_Coverage  = round(mean(Percent_Functional_Latrine_Coverage, na.rm = TRUE), 0),
+              Q1_Hand_Washing_Fac = round(mean(Percent_Hand_Washing_Facility_Coverage, na.rm = TRUE), 0),
+              Q1_Drying_Rack = round(mean(Percent_Functional_Dish_Drying_Rack, na.rm = TRUE), 0))
 
 knitr::kable(Q1_Indicator_Performance , align = 'l')
 
 ```
+:::
 
-## INDICATOR PERFORMANCE 
+::: {.column}
+
+* In Q1 2025, latrine coverage among FCAP Households was highest at 88% compared to the other indicators.
+
+* Only about half (53%) of Households have Hand washing facilities stationed for use near Latrines
+
+:::
+::::::
+
+## INDICATOR PERFORMANCE COMPARISON 
 
 :::::: {.columns}
 ::: {.column}
@@ -212,34 +233,64 @@ knitr::kable(Ind_Performance, align = 'l')
 
 ::: {.column}
 
-* Overall, the program performed strongly throughout the year, achieving all program quality indicators, as illustrated in the graph, with each indicator exceeding its target.
+* Overall, there's an improvement in performance on the 3 indicators when compared to Q2 2024 
 
-* However, the percentage of communities in the green category saw a sharp decline from 86% in Q3 to 67% in Q4. This drop is attributed to the inclusion of the new 2024 cohort communities, which were in the early stages of the FCAP, as this partnership commenced in Q4.
+* However more needs to be done to ensure households adopt hand washing practices after Latrine use to prevent diseases. 
 
 :::
 ::::::
 
-## LATRINE COVERAGE PER SUB COUNTY
+## LATRINE COVERAGE BY SUBCOUNTY
 
 :::::: {.columns}
 ::: {.column}
 
 ```{r, opts.label = "right"}
-library(readxl)
-library(scales)
-library(knitr)
 
-FCAP_quality_overall <- read_excel("Uganda_Q4_2024_data.xlsx", sheet = "FCAP_quality(overall)")
+Latrine_export <- Q1_Health_data %>% group_by(Subcounty) %>% 
+    summarize(Q1_Latrine_Coverage  = mean(Percent_Functional_Latrine_Coverage))
 
-FCAP_quality_overall[] <- lapply(FCAP_quality_overall, function(x) {
-  if (is.numeric(x)) {
-    return(scales::percent(x))  
-  } else {
-    return(x)
-  }
-})
+write.csv(Latrine_export, file = "Latrine_export.csv")
 
-knitr::kable(FCAP_quality_overall, align = 'l')
+Latrine_by_sub <- read_excel("FCAP Workflow - Bulambuli 2.0 - FCAP Progress - Bulambuli Layering Questionnaire (created 2024-08-12) 2025-03-20.xlsx", sheet = "Latrine_coverage_by_subcounty") %>% select(Subcounty, `Q1_Latrine_Coverage`)
+              
+# Reshape the data to long format
+
+Latrine_by_sub <- Latrine_by_sub %>% 
+  pivot_longer(
+    cols = c("Q1_Latrine_Coverage"),
+    names_to = "latrine_coverage",
+    values_to = "percentage"
+  )
+
+# Reorder subcounties
+
+Latrine_by_sub <- Latrine_by_sub %>% 
+  mutate(
+    Subcounty = factor(Subcounty, levels = c(
+      "bukhalu", "bulegeni", "buluganya", "bumufuni",
+      "bumugibole", "bunambutye", "bwikhonge", "kamu",
+      "lusha", "muyembe", "nabongo", "namisuni",
+      "simu", "sisiyi", "sotti"
+    ))
+  )
+
+ggplot(Latrine_by_sub, aes(x = Subcounty, y = percentage, fill = Subcounty)) +
+  geom_col(show.legend = FALSE) +
+  geom_col(fill = "forestgreen") +
+  geom_text(aes(label = paste0(round(percentage), "%")),
+            vjust = -0.5, size = 3.5) +
+  labs(
+    title = "Latrine Coverage by Subcounty",
+    x = "Subcounty",
+    y = "Latrine Coverage (%)"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(face = "bold", size = 14)
+  )
+
 
 ```
 
@@ -247,44 +298,71 @@ knitr::kable(FCAP_quality_overall, align = 'l')
 
 ::: {.column}
 
-* Overall, the program performed strongly throughout the year, achieving all program quality indicators, as illustrated in the graph, with each indicator exceeding its target.
+* All households in FCAP communities in Lusha subcounty have functional Latrines
 
-* However, the percentage of communities in the green category saw a sharp decline from 86% in Q3 to 67% in Q4. This drop is attributed to the inclusion of the new 2024 cohort communities, which were in the early stages of the FCAP, as this partnership commenced in Q4.
+* More support/sensitization need to be given to communities in Bunambutye, Nabongo and Buluganya
 
 :::
 ::::::
 
-## HAND WASHING FACILITY COVERAGE
+## HAND WASHING FACILITY COVERAGE BY SUBCOUNTY
 
 :::::: {.columns}
 ::: {.column}
 
 ```{r, opts.label = "right"}
-library(readxl)
-library(scales)
-library(knitr)
 
-FCAP_quality_overall <- read_excel("Uganda_Q4_2024_data.xlsx", sheet = "FCAP_quality(overall)")
+HandWashing_export <- Q1_Health_data %>% group_by(Subcounty) %>% 
+    summarize(HandWashing_Coverage  = mean(Percent_Hand_Washing_Facility_Coverage))
 
-FCAP_quality_overall[] <- lapply(FCAP_quality_overall, function(x) {
-  if (is.numeric(x)) {
-    return(scales::percent(x))  
-  } else {
-    return(x)
-  }
-})
+write.csv(HandWashing_export, file = "HandWashing_export.csv")
 
-knitr::kable(FCAP_quality_overall, align = 'l')
+HandWashing_by_sub <- read_excel("FCAP Workflow - Bulambuli 2.0 - FCAP Progress - Bulambuli Layering Questionnaire (created 2024-08-12) 2025-03-20.xlsx", sheet = "HandWashing_Sub") %>% select(`Subcounty`, `HandWashing_Coverage`)
+              
+# Reshape the data to long format
+
+HandWashing_by_sub <- HandWashing_by_sub %>% 
+  pivot_longer(
+    cols = c("HandWashing_Coverage"),
+    names_to = "HandWashing_coverage",
+    values_to = "percentage"
+  )
+
+# Reorder subcounties
+
+HandWashing_by_sub <- HandWashing_by_sub %>% 
+  mutate(
+    Subcounty = factor(Subcounty, levels = c(
+      "bukhalu", "bulegeni", "buluganya", "bumufuni",
+      "bumugibole", "bunambutye", "bwikhonge", "kamu",
+      "lusha", "muyembe", "nabongo", "namisuni",
+      "simu", "sisiyi", "sotti"
+    ))
+  )
+
+ggplot(HandWashing_by_sub, aes(x = Subcounty, y = percentage, fill = Subcounty)) +
+  geom_col(show.legend = FALSE) +
+  geom_col(fill = "forestgreen") +
+  geom_text(aes(label = paste0(round(percentage), "%")),
+            vjust = -0.5, size = 3.5) +
+  labs(
+    title = "Functional Hand Washing Facility Coverage by Subcounty",
+    x = "Subcounty",
+    y = "Hand Washing Facility Coverage (%)"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(face = "bold", size = 14)
+  )
+
 
 ```
-
 :::
 
 ::: {.column}
 
-* Overall, the program performed strongly throughout the year, achieving all program quality indicators, as illustrated in the graph, with each indicator exceeding its target.
-
-* However, the percentage of communities in the green category saw a sharp decline from 86% in Q3 to 67% in Q4. This drop is attributed to the inclusion of the new 2024 cohort communities, which were in the early stages of the FCAP, as this partnership commenced in Q4.
+* FCAP Communities in majority of the subcounties require intensive sensitization on importance of having hand washing facilities near Latrines. Spark can continue to leaverage the existing Local Government Health Assistants for this sensitization exercise
 
 :::
 ::::::
@@ -295,38 +373,89 @@ knitr::kable(FCAP_quality_overall, align = 'l')
 ::: {.column}
 
 ```{r, opts.label = "right"}
-library(readxl)
-library(scales)
-library(knitr)
 
-FCAP_quality_overall <- read_excel("Uganda_Q4_2024_data.xlsx", sheet = "FCAP_quality(overall)")
+DryingRack_export <- Q1_Health_data %>% group_by(Subcounty) %>% 
+    summarize(DryingRack_Coverage  = mean(Percent_Functional_Dish_Drying_Rack))
 
-FCAP_quality_overall[] <- lapply(FCAP_quality_overall, function(x) {
-  if (is.numeric(x)) {
-    return(scales::percent(x))  
-  } else {
-    return(x)
-  }
-})
+write.csv(DryingRack_export, file = "DryingRack_export.csv")
 
-knitr::kable(FCAP_quality_overall, align = 'l')
+DryingRack_by_sub <- read_excel("FCAP Workflow - Bulambuli 2.0 - FCAP Progress - Bulambuli Layering Questionnaire (created 2024-08-12) 2025-03-20.xlsx", sheet = "DryingRack_Sub") %>% select(`Subcounty`, `DryingRack_Coverage`)
+              
+# Reshape the data to long format
 
+DryingRack_by_sub <- DryingRack_by_sub %>% 
+  pivot_longer(
+    cols = c("DryingRack_Coverage"),
+    names_to = "DryingRack_coverage",
+    values_to = "percentage"
+  )
+
+# Reorder subcounties
+
+DryingRack_by_sub <- DryingRack_by_sub %>% 
+  mutate(
+    Subcounty = factor(Subcounty, levels = c(
+      "bukhalu", "bulegeni", "buluganya", "bumufuni",
+      "bumugibole", "bunambutye", "bwikhonge", "kamu",
+      "lusha", "muyembe", "nabongo", "namisuni",
+      "simu", "sisiyi", "sotti"
+    ))
+  )
+
+ggplot(DryingRack_by_sub, aes(x = Subcounty, y = percentage, fill = Subcounty)) +
+  geom_col(show.legend = FALSE) +
+  geom_col(fill = "forestgreen") +
+  geom_text(aes(label = paste0(round(percentage), "%")),
+            vjust = -0.5, size = 3.5) +
+  labs(
+    title = "Drying Rack Coverage by Subcounty",
+    x = "Subcounty",
+    y = "Drying Rack Coverage (%)"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(face = "bold", size = 14))
 ```
 
 :::
 
 ::: {.column}
 
-* Overall, the program performed strongly throughout the year, achieving all program quality indicators, as illustrated in the graph, with each indicator exceeding its target.
+* Many communities haven't adopted the use of dish drying racks as seen from the table.
 
-* However, the percentage of communities in the green category saw a sharp decline from 86% in Q3 to 67% in Q4. This drop is attributed to the inclusion of the new 2024 cohort communities, which were in the early stages of the FCAP, as this partnership commenced in Q4.
+* Marjority of these communities performed below 80%, and communities in Bunambutye have the lowest performance of 34%
 
 :::
 ::::::
 
 ## CONCLUSIONS AND RECOMMENDATIONS
 
+## CONCLUSION
 
+* In certain subcounties, the number of households surveyed exceeded the total number of households recorded in CommCare. 
+
+* Given the period under review (Q2 2024 to Q1 2025), the level of improvement across the indicators appears lower than expected. Considering the program implementation timelines and efforts, performance should ideally have been higher than what is reflected in this report.
+
+  * Functional Latrine Coverage - ↑ 5% Improvement
+  * Hand Washing Facility Coverage - ↑ 4% Increase
+  * Dish Drying Rack Coverage - ↑ 7% Increase
+ 
+
+
+## RECOMMENDATION
+
+* The Program team needs to review and reconcile household size records to ensure consistency and accuracy. 
+
+* The Impact and Product team should devise ways of ensuring quality during data collection.
+
+* Spark should strengthen partnership with Health Department at the Bulambuli LG to enable consistent visits to communities by the Health Assistants
+
+* CBFs need to be trained on the Health Layering model which can then be incoperated during weekly community meetings
+
+* Every quarter, the Spark team, together with LG needs to conduct monitoring visits to sampled Households to ensure the 3 items are in place
+
+* Community Exchange Visits is a good way for communities to be motivated and learn from each other.
 
 
 
